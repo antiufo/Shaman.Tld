@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0-beta-2616",
+  "authors": [
+    "Dan Esparza",
+    "Andrea Martinelli"
+  ],
+  "tags": [
+    "tld",
+    "domain",
+    "publicsuffix",
+    "publix",
+    "suffix",
+    "url"
+  ],
+  "description": "Determines the actual top level domain of a URL.",
+  "iconUrl": "http://shaman.io/images/shaman-nuget-icon.png",
+  "projectUrl": "http://shaman.io/",
+  "compilationOptions": {
+    "keyFile": "ShamanOpenSourceKey.snk"
+  },
+  "compile": [],
+  "dependencies": {
+    "Shaman.ValueString": "1.0.2.7"
+  },
+  "frameworks": {
+    "net45+win+wpa81": {
+      "frameworkAssemblies": {
+        "System.Runtime": "4.0.0.0",
+        "System.Runtime.Extensions": "4.0.0.0",
+        "System.Collections": "4.0.0.0",
+        "System.Linq": "4.0.0.0",
+        "System.Threading": "4.0.0.0"
+      }
+    }
+  }
+}
