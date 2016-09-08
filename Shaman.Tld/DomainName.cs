@@ -106,6 +106,18 @@ namespace DomainName.Library
 
         #region Parse domain - private static method
 
+       internal static void ParseDomainName(string domainStringStr, out string TLD, out string SLD, out string SubDomain, out TLDRule MatchingRule)
+       {
+	        ValueString tld;
+            ValueString sld;
+            ValueString subDomain;
+            ParseDomainName(domainStringStr, out tld, out sld, out subDomain, out MatchingRule);
+            TLD = tld.ToString();
+            SLD = sld.ToString();
+            SubDomain = subDomain.ToString();
+       }
+ 
+
         /// <summary>
         /// Converts the string representation of a domain to it's 3 distinct components: 
         /// Top Level Domain (TLD), Second Level Domain (SLD), and subdomain information
@@ -115,21 +127,21 @@ namespace DomainName.Library
         /// <param name="SLD"></param>
         /// <param name="SubDomain"></param>
         /// <param name="MatchingRule"></param>
-        private static void ParseDomainName(string domainString, out string TLD, out string SLD, out string SubDomain, out TLDRule MatchingRule)
+        internal static void ParseDomainName(string domainStringStr, out ValueString TLD, out ValueString SLD, out ValueString SubDomain, out TLDRule MatchingRule)
         {
-            TLD = string.Empty;
-            SLD = string.Empty;
-            SubDomain = string.Empty;
+            TLD = ValueString.Empty;
+            SLD = ValueString.Empty;
+            SubDomain = ValueString.Empty;
             MatchingRule = default(TLDRule);
 
             //  If the fqdn is empty, we have a problem already
-            if (string.IsNullOrWhiteSpace(domainString))
+            if (string.IsNullOrWhiteSpace(domainStringStr))
                 throw new ArgumentException("The domain cannot be blank");
-
-            domainString = domainString.ToLowerFast();
+            domainStringStr = domainStringStr.ToLowerFast();
+            var domainString = domainStringStr.AsValueString();
 
             //  Next, find the matching rule:
-            MatchingRule = FindMatchingTLDRule(domainString);
+            MatchingRule = FindMatchingTLDRule(domainStringStr);
 
             //  At this point, no rules match, we have a problem
             if (MatchingRule.Name == null)
@@ -166,7 +178,7 @@ namespace DomainName.Library
             }
 
             //  Based on the tld rule found, get the domain (and possibly the subdomain)
-            string tempSudomainAndDomain = string.Empty;
+            var tempSudomainAndDomain = ValueString.Empty;
             int tldIndex = 0;
 
             //  First, determine what type of rule we have, and set the TLD accordingly
@@ -175,35 +187,36 @@ namespace DomainName.Library
                 case TLDRule.RuleType.Normal:
                     if (domainString.Length == MatchingRule.Name.Length)
                     {
-                        tempSudomainAndDomain = string.Empty;
+                        tempSudomainAndDomain = ValueString.Empty;
                         TLD = domainString;
                     }
                     else
                     {
-                        tldIndex = domainString.IndexOf("." + MatchingRule.Name, Utils.InvariantCultureIgnoreCase);
+                        tldIndex = domainString.Length - MatchingRule.Name.Length - 1;
                         tempSudomainAndDomain = domainString.Substring(0, tldIndex);
                         TLD = domainString.Substring(tldIndex + 1);
                     }
                     break;
                 case TLDRule.RuleType.Wildcard:
                     //  This finds the last portion of the TLD...
-                    tldIndex = domainString.IndexOf("." + MatchingRule.Name, Utils.InvariantCultureIgnoreCase);
+                    tldIndex = domainString.Length - MatchingRule.Name.Length - 1;
                     tempSudomainAndDomain = domainString.Substring(0, tldIndex);
 
                     //  But we need to find the wildcard portion of it:
-                    tldIndex = tempSudomainAndDomain.LastIndexOf(".", Utils.InvariantCultureIgnoreCase);
+                    tldIndex = tempSudomainAndDomain.LastIndexOf('.');
                     tempSudomainAndDomain = domainString.Substring(0, tldIndex);
                     TLD = domainString.Substring(tldIndex + 1);
                     break;
                 case TLDRule.RuleType.Exception:
-                    tldIndex = domainString.LastIndexOf(".", Utils.InvariantCultureIgnoreCase);
+                    tldIndex = domainString.LastIndexOf('.');
                     tempSudomainAndDomain = domainString.Substring(0, tldIndex);
                     TLD = domainString.Substring(tldIndex + 1);
                     break;
             }
 
+
             //  See if we have a subdomain:
-            var lstRemainingParts = tempSudomainAndDomain.SplitFast('.');
+            var lstRemainingParts = tempSudomainAndDomain.Split('.');
 
             //  If we have 0 parts left, there is just a tld and no domain or subdomain
             //  If we have 1 part, it's the domain, and there is no subdomain
@@ -290,7 +303,7 @@ namespace DomainName.Library
             foreach (string domainPart in lstDomainParts)
             {
                 //  Add on our next domain part:
-                checkAgainst = string.Format("{0}.{1}", domainPart, checkAgainst);
+                checkAgainst = domainPart + "." + checkAgainst;
 
                 //  If we end in a period, strip it off:
                 if (checkAgainst.EndsWith("."))
@@ -313,7 +326,7 @@ namespace DomainName.Library
             TLDRule best = default(TLDRule);
             foreach (var item in ruleMatches)
             {
-                if(item.Name.Length > maxLength)
+                if (item.Name.Length > maxLength)
                 {
                     best = item;
                     maxLength = item.Name.Length;

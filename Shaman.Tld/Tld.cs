@@ -11,12 +11,17 @@ namespace Shaman.Runtime
             return GetDomainFromHost(url.Host);
         }
 
+        
         public static string GetDomainFromHost(string host)
         {
-            var z = new DomainName.Library.DomainName(host);
-            if (string.IsNullOrEmpty(z.Domain)) return z.TLD;
-            return z.Domain + (!string.IsNullOrEmpty(z.TLD) ? "." + z.TLD : null);
-
+            ValueString tld;
+            ValueString domain;
+            ValueString subdomain;
+            DomainName.Library.TLDRule rule;
+            DomainName.Library.DomainName.ParseDomainName(host, out tld, out domain, out subdomain, out rule);
+            if (domain.Length == 0) return tld.ToString();
+            if (tld.Length == 0) return domain.ToString();
+            return domain.ToString() + "." + tld.ToString();
         }
 
         public static string GetFullDomainWithoutWww(string host)
